@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="assets/scripts/jquery-3.5.1.min.js"></script>
+    <script src="assets/bootstrap-5.0.2-dist/bootstrap-5.0.2-dist/js/bootstrap.min.js"></script>
+    <script src="prices.json"></script>
+
+    <link rel="stylesheet" href="assets/bootstrap-5.0.2-dist/bootstrap-5.0.2-dist/css/bootstrap.min.css">
+    <title>Switcheo Problem 2 - Brian Chong</title>
+</head>
+
+<body>
+    <div id="formPadding">
+        <h1 id="formTitle">Token exchange</h1>
+        <form>
+            <div id="payRow" class="row">
+                <div class="col">
+                    <label for="inlineFormText">You pay</label>
+                    <input id="payInput" type="number" min="0" class="form-control" placeholder="0">
+                </div>
+                <div class="col">
+                    <label for="inlineFormSelect">Token</label>
+                    <select id="paySelect" class="form-select" aria-label="Default select example">
+                        <option selected>Select your token</option>
+                    </select>
+                </div>
+            </div>
+            <div id="receiveRow" class="row">
+                <div class="col">
+                    <label for="inlineFormText">You receive</label>
+                    <input id="receiveInput" type="number" min="0" class="form-control" placeholder="0">
+                </div>
+                <div class="col">
+                    <label for="inlineFormSelect">Token</label>
+                    <select id="receiveSelect" class="form-select" aria-label="Default select example">
+                        <option selected>Select your token</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <div id="tokenImageRow">
+            <div class="tokenImgContainer">
+                <img id="fromImg" class="tokenImages">
+                <img id="arrowImg" src="assets/images/rightarrow.svg">
+                <img id="toImg" class="tokenImages">
+            </div>
+        </div>
+        <div>
+            <p id="conversionRate"></p>
+        </div>
+    </div>
+</body>
+
+<script>
+    let paySelectRate, receiveSelectRate;
+
+    $(document).ready(function () {
+        // Get references to input fields
+        const payInput = document.getElementById("payInput");
+        const paySelect = document.getElementById("paySelect");
+        const receiveInput = document.getElementById("receiveInput");
+        const receiveSelect = document.getElementById("receiveSelect");
+
+        // Populate token select options
+        loadTokenOptions(paySelect);
+        loadTokenOptions(receiveSelect);
+
+        // Event listeners to trigger computation when input values change
+        payInput.addEventListener("input", function () {
+            computeResult("payInput");
+        });
+        paySelect.addEventListener("change", function () {
+            computeResult("paySelect");
+        });
+        receiveInput.addEventListener("input", function () {
+            computeResult("receiveInput");
+        });
+        receiveSelect.addEventListener("change", function () {
+            computeResult("receiveSelect");
+        });
+    });
+
+    // Get token names from json
+    function loadTokenOptions(selectElement) {
+        fetch("assets/prices.json")
+            .then(response => response.json())
+            .then(data => {
+                console.log("Data fetched successfully:", data); // Log the fetched data
+                data.forEach(option => {
+                    const optionElement = document.createElement("option");
+                    optionElement.value = option.price;
+                    optionElement.textContent = option.currency;
+                    selectElement.appendChild(optionElement);
+                });
+            })
+            .catch(error => console.error("Error fetching JSON:", error));
+    }
+
+    // Function to compute the result
+    function computeResult(inputChanged) {
+        // Get input values
+        const amountPaid = parseFloat(payInput.value);
+        const amountReceived = parseFloat(receiveInput.value);
+
+        // Compute the result based on price rates
+        console.log("paySelect: " + paySelect.value + "\n" + "receiveSelect: " + receiveSelect.value);
+        var result = (amountPaid * parseFloat(paySelect.value)) / parseFloat(receiveSelect.value);
+
+        // Update the corresponding field
+        if (inputChanged == "receiveInput") {
+            result = amountReceived * (receiveSelect.value) / parseFloat(paySelect.value);
+            payInput.value = result.toFixed(4); // Round to 2 decimal places for the result
+        }
+        else {
+            receiveInput.value = result.toFixed(4); // Round to 2 decimal places for the result
+        }
+
+        if (paySelect.value != "Select your token" && receiveSelect.value != "Select your token") {
+            document.getElementById("conversionRate").innerHTML = "1 " + $("#paySelect option:selected").text() + " = " + paySelect.value / receiveSelect.value + " " + $("#receiveSelect option:selected").text();
+            $("#conversionRate").fadeIn(800);
+            console.log("getting image...");
+            getImage();
+        }
+    }
+
+    function getImage() {
+        const fromImg = document.getElementById("fromImg");
+        const toImg = document.getElementById("toImg");
+
+        var fromSelectedIndex = paySelect.selectedIndex;
+        var toSelectedIndex = receiveSelect.selectedIndex;
+
+        // Get the text of the selected option
+        var fromSelectedOptionText = paySelect.options[fromSelectedIndex].textContent;
+        var toSelectedOptionText = receiveSelect.options[toSelectedIndex].textContent;
+
+        fromImg.src = "assets/images/" + fromSelectedOptionText + ".svg";
+        toImg.src = "assets/images/" + toSelectedOptionText + ".svg";
+        $("#tokenImageRow").fadeIn(800);
+    }
+</script>
+
+<style>
+    html {
+        height: 100%;
+    }
+
+    body {
+        height: 100%;
+        margin: 0;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-image: linear-gradient(to bottom right, #343944, black);
+    }
+
+    label {
+        color: white;
+        padding-bottom: 0.5em;
+    }
+
+    #formPadding {
+        padding: 2em 5em 2em;
+    }
+
+    #formTitle {
+        font-size: 3rem;
+        color: white;
+        padding-bottom: 1em;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 1.2rem;
+    }
+
+    #payRow,
+    #receiveRow {
+        margin-bottom: 2em;
+    }
+
+    .row {
+        padding: 1em 1em 2em;
+        background-color: rgba(117, 117, 117, 0.099);
+        border-radius: 15px;
+    }
+
+    .Select-menu-outer {
+        bottom: auto;
+        top: 100%
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    #tokenImageRow {
+        padding: 3em;
+        /* background-color: brown; */
+        /* display: inline-flex; */
+        width: 100%;
+        display: none;
+    }
+
+    .tokenImgContainer {
+        width: 100%;
+        padding: 0 4em;
+        text-align: center;
+        /* background-color: brown; */
+    }
+
+    .tokenImages {
+        width: 7em;
+        margin: 0 2em;
+    }
+
+    #arrowImg {
+        width: 3em;
+    }
+
+    #conversionRate {
+        color: white;
+        text-align: center;
+        display: none;
+        margin-top: 0.1em;
+    }
+
+    /* Small screen */
+    @media only screen and (max-width: 800px) {
+        .tokenImgContainer {
+            padding: 0;
+        }
+
+        #tokenImageRow {
+            padding: 0;
+        }
+
+        .tokenImages {
+            width: 5em;
+            margin: 0 1em;
+        }
+
+        #conversionRate {
+            margin-top: 2em;
+        }
+    }
+</style>
+
+</html>
